@@ -21,7 +21,7 @@ Tool that can be used to calibrate interface between Leap Motion Controller and 
 - In appliacation you can choose width and height of projector image in pixels.
 - Cycles is how many times you want to run the calibration pattern. Each has 3 * 3 points.
 - Shift changes how far from edges the points are drawn.
-- Head mount optimization toggles the same thing for Leap Motion . It is used because Leap Motion is upside down. https://developer.leapmotion.com/documentation/csharp/api/Leap.Controller.html#id7
+- Head mount optimization toggles the same thing for Leap Motion. It is used because Leap Motion is upside down. https://developer.leapmotion.com/documentation/csharp/api/Leap.Controller.html#id7
 - Calibrate lets you choose file you want the calibration to save in (inputs.txt if you want to use it later in the game)
 - Load loads already saved calibration you choose.
 - Reprojection lets you calculate reprojection error for the chosen calibration.
@@ -42,7 +42,7 @@ Controlling is modified to be used with Leap Motion and projector setup as shown
 - LeapMotionSpaceGame root folder contains several OpenCV dlls precompiled from opencv-2.4.10 build/x86/vc12/bin. In case of problems delete them and do your own build. You can then put them back into root folder or add path to them into system PATH variable.
 - create inputs.txt with Calibration.py
     - put it in the Assets folder for using it in unity
-    - put it in the game_Data to use the precompiled game 
+    - put it in the game_Data to use it with the precompiled game 
 - root folder
     - Leap.dll from Leap SDK
     - LeapCSharp.dll from Leap SDK      
