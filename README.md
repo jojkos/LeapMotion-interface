@@ -31,7 +31,9 @@ https://youtu.be/l7NUiP3t3F8
 #Game
 ##Build
 - compiled in Unity 3D
+
 ##Source - Unity 3D
+
 ###Requirements
 - LeapMotionSpaceGame root folder contains several OpenCV dlls precompiled from opencv-2.4.10 build/x86/vc12/bin. In case of problems delete them and do your own build. You can then put them back into root folder or add path to them into system PATH variable.
     
