@@ -1,34 +1,34 @@
 # LeapMotion-interface
 
-Calibration
---
-    build
-    --    
+#Calibration
+    ##build
     - compiled into exe using py2exe
 
-    Calibration.py
-    -------------------------------------
-    requirements
-    - python 2, i am using 2.7.6
-    - PyQT 4
-    - Leap API from Leap SDK, Leap.py must be put to both x86 and x64 folder. already included
-        
-        newest SDK version is available at https://developer.leapmotion.com/downloads
-        used version - 2.2.2+24469
-    - numpy http://www.numpy.org/
-    - openCV (cv2) http://docs.opencv.org/trunk/doc/py_tutorials/py_setup/py_setup_in_windows/py_setup_in_windows.html, already included
+    ##Calibration.py
+        ###requirements
+            - python 2, i am using 2.7.6
+            - PyQT 4
+            - Leap API from Leap SDK, Leap.py must be put to both x86 and x64 folder. already included
+                
+                newest SDK version is available at https://developer.leapmotion.com/downloads
+                used version - 2.2.2+24469
+            - numpy http://www.numpy.org/
+            - openCV (cv2) http://docs.opencv.org/trunk/doc/py_tutorials/py_setup/py_setup_in_windows/py_setup_in_windows.html, already included
     
-usage
-    -Recommended setup 
-    ![alt tag](https://raw.github.com/username/projectname/branch/path/to/img.png)
-    - In appliacation you can choose width and height of projector image in pixels.
-    - Cycles is how many times you want to run the calibration pattern. Each has 3 * 3 points.
-    - Shift changes how far from edges the points are drawn.
-    - Head mount optimization toggles the same thing for Leap Motion . It is used because Leap Motion is upside down. https://developer.leapmotion.com/documentation/csharp/api/Leap.Controller.html#id7
-    - Calibrate lets you choose file you want the calibration to save in (inputs.txt if you want to use it later in the game)
-    - Load loads already saved calibration you choose.
-    - Reprojection lets you calculate reprojection error for the chosen calibration.
-    - To close calibration window, right click it and chose close.
+    ##usage
+        -Recommended setup 
+        ![hw setup](https://github.com/jojkos/LeapMotion-interface/blob/master/setup.png)
+        - In appliacation you can choose width and height of projector image in pixels.
+        - Cycles is how many times you want to run the calibration pattern. Each has 3 * 3 points.
+        - Shift changes how far from edges the points are drawn.
+        - Head mount optimization toggles the same thing for Leap Motion . It is used because Leap Motion is upside down. https://developer.leapmotion.com/documentation/csharp/api/Leap.Controller.html#id7
+        - Calibrate lets you choose file you want the calibration to save in (inputs.txt if you want to use it later in the game)
+        - Load loads already saved calibration you choose.
+        - Reprojection lets you calculate reprojection error for the chosen calibration.
+        - To close calibration window, right click it and chose close.
+    
+example video of similar calibration
+https://youtu.be/l7NUiP3t3F8    
  
 Game
 ------------------------------------
@@ -46,7 +46,9 @@ requirements
     - LeapCSharp.NET3.5.dll from Leap SDK
     - SimpleJSON.cs from https://code.google.com/p/json-simple/ used to read the inputs.txt file
     - OpenCvSharp.dll from https://github.com/shimat/opencvsharp/releases to be able to use OpenCV methods inside Unity's C#
-    
+
+example video
+https://youtu.be/G3N2fOW8vmU    
 
 
 assets from https://unity3d.com/learn/tutorials/projects/space-shooter
