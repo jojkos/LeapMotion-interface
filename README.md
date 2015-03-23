@@ -16,7 +16,7 @@ Tool that can be used to calibrate interface between Leap Motion Controller and 
 - openCV (cv2) http://docs.opencv.org/trunk/doc/py_tutorials/py_setup/py_setup_in_windows/py_setup_in_windows.html, already included
     
 ##Usage
--Recommended setup 
+Recommended setup 
 ![hw setup](https://github.com/jojkos/LeapMotion-interface/blob/master/setup.png)
 - In appliacation you can choose width and height of projector image in pixels.
 - Cycles is how many times you want to run the calibration pattern. Each has 3 * 3 points.
