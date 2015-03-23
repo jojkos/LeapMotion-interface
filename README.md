@@ -1,4 +1,6 @@
 #Calibration
+
+Tool that can be used to calibrate interface between Leap Motion Controller and projector. Result is camera matrix from which can be computed translation from Leap coordinates in world space into projector coordinates in pixels.
 ##Build
 - compiled into exe using py2exe
 
@@ -29,6 +31,8 @@ example video of similar calibration
 https://youtu.be/l7NUiP3t3F8    
  
 #Game
+Game created in Unity 3D based on https://unity3d.com/learn/tutorials/projects/space-shooter.
+Controlling is modified to be used with Leap Motion and projector setup as shown on picture.
 ##Build
 - compiled in Unity 3D
 
