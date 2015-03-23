@@ -19,8 +19,16 @@ Calibration
     - openCV (cv2) http://docs.opencv.org/trunk/doc/py_tutorials/py_setup/py_setup_in_windows/py_setup_in_windows.html, already included
     
 usage
-    - inputs.txt
-
+    -Recommended setup 
+    ![alt tag](https://raw.github.com/username/projectname/branch/path/to/img.png)
+    - In appliacation you can choose width and height of projector image in pixels.
+    - Cycles is how many times you want to run the calibration pattern. Each has 3 * 3 points.
+    - Shift changes how far from edges the points are drawn.
+    - Head mount optimization toggles the same thing for Leap Motion . It is used because Leap Motion is upside down. https://developer.leapmotion.com/documentation/csharp/api/Leap.Controller.html#id7
+    - Calibrate lets you choose file you want the calibration to save in (inputs.txt if you want to use it later in the game)
+    - Load loads already saved calibration you choose.
+    - Reprojection lets you calculate reprojection error for the chosen calibration.
+    - To close calibration window, right click it and chose close.
  
 Game
 ------------------------------------
