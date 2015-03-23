@@ -40,7 +40,6 @@ Controlling is modified to be used with Leap Motion and projector setup as shown
 
 ###Requirements
 - LeapMotionSpaceGame root folder contains several OpenCV dlls precompiled from opencv-2.4.10 build/x86/vc12/bin. In case of problems delete them and do your own build. You can then put them back into root folder or add path to them into system PATH variable.
-    
 - create inputs.txt with Calibration.py
     - put it in the Assets folder for using it in unity
     - put it in the game_Data to use the precompiled game 
