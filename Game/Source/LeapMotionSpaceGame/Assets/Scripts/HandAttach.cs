@@ -4,6 +4,7 @@ using System.Collections;
 using Leap;
 
 public class HandAttach : MonoBehaviour {
+	//*depreciated*//
 
 	public LeapController leapController;
 

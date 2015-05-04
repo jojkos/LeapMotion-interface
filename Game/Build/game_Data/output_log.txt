@@ -1,0 +1,29 @@
+Initialize engine version: 4.6.2f1 (bd99309c2ad7)
+GfxDevice: creating device client; threaded=1
+Direct3D:
+    Version:  Direct3D 9.0c [nvd3dum.dll 9.18.13.5012]
+    Renderer: NVIDIA GeForce GTX 760
+    Vendor:   NVIDIA
+    VRAM:     1991 MB (via DXGI)
+    Caps:     Shader=30 DepthRT=1 NativeDepth=1 NativeShadow=1 DF16=0 INTZ=1 RAWZ=0 NULL=1 RESZ=0 SlowINTZ=0
+Begin MonoManager ReloadAssembly
+Platform assembly: G:\Dropbox\FIT\3.rocnik\BP\github\LeapMotion-interface\Game\Build\game_Data\Managed\UnityEngine.dll (this message is harmless)
+Loading G:\Dropbox\FIT\3.rocnik\BP\github\LeapMotion-interface\Game\Build\game_Data\Managed\UnityEngine.dll into Unity Child Domain
+Platform assembly: G:\Dropbox\FIT\3.rocnik\BP\github\LeapMotion-interface\Game\Build\game_Data\Managed\Assembly-CSharp.dll (this message is harmless)
+Loading G:\Dropbox\FIT\3.rocnik\BP\github\LeapMotion-interface\Game\Build\game_Data\Managed\Assembly-CSharp.dll into Unity Child Domain
+Platform assembly: G:\Dropbox\FIT\3.rocnik\BP\github\LeapMotion-interface\Game\Build\game_Data\Managed\UnityEngine.UI.dll (this message is harmless)
+Loading G:\Dropbox\FIT\3.rocnik\BP\github\LeapMotion-interface\Game\Build\game_Data\Managed\UnityEngine.UI.dll into Unity Child Domain
+Platform assembly: G:\Dropbox\FIT\3.rocnik\BP\github\LeapMotion-interface\Game\Build\game_Data\Managed\LeapCSharp.NET3.5.dll (this message is harmless)
+Loading G:\Dropbox\FIT\3.rocnik\BP\github\LeapMotion-interface\Game\Build\game_Data\Managed\LeapCSharp.NET3.5.dll into Unity Child Domain
+Platform assembly: G:\Dropbox\FIT\3.rocnik\BP\github\LeapMotion-interface\Game\Build\game_Data\Managed\OpenCvSharp.dll (this message is harmless)
+Loading G:\Dropbox\FIT\3.rocnik\BP\github\LeapMotion-interface\Game\Build\game_Data\Managed\OpenCvSharp.dll into Unity Child Domain
+- Completed reload, in  0.039 seconds
+desktop: 1920x1200 59Hz; virtual: 1920x1200 at 0,0
+<RI> Initializing input.
+<RI> Input initialized.
+Platform assembly: G:\Dropbox\FIT\3.rocnik\BP\github\LeapMotion-interface\Game\Build\game_Data\Managed\System.Core.dll (this message is harmless)
+Platform assembly: G:\Dropbox\FIT\3.rocnik\BP\github\LeapMotion-interface\Game\Build\game_Data\Managed\System.dll (this message is harmless)
+G:/Dropbox/FIT/3.rocnik/BP/github/LeapMotion-interface/Game/Build/game_Data/inputs.txt
+ 
+(Filename: C:/buildslave/unity/build/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 56)
+

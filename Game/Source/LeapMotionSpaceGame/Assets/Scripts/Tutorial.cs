@@ -2,6 +2,8 @@
 using System.Collections;
 
 public class Tutorial : MonoBehaviour {
+	//*běh herního tutorialu*//
+
 	public FadeText tutorialText;
 	public GameObject skipTutorial;
 	public TutorialPlayerController tutorialPlayer;

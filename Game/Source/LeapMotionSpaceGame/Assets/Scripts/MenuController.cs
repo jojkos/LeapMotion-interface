@@ -5,6 +5,8 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class MenuController : MonoBehaviour {
+	//*ovladač herního menu*//
+
 	public GameObject menuChoices;
 	public GameObject settingsChoices;
 	public GameObject highscoreChoices;

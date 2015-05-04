@@ -2,6 +2,8 @@
 using System.Collections;
 
 public class Mover : MonoBehaviour {	
+	//*pohyb herních objektů*//
+
 	public float speed;
 
 	void Start()

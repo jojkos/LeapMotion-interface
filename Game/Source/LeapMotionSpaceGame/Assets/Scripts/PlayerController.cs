@@ -6,6 +6,7 @@ using UnityEngine.UI;
 //using Leap;
 
 public class PlayerController : MonoBehaviour {
+	//*hlavní ovladač hráče - lodičky*//
 
 	public float speed;
 	public Boundary boundary; //sou nastaveny boundary rucne
@@ -42,6 +43,7 @@ public class PlayerController : MonoBehaviour {
 	}
 
 	void OnSwipe(Vector3 direction){
+		/*swipe gestem ovladane nastavovani barvy lodicky - nepouziva se*/
 		if (gameController.UsingLeap () && gameController.IsColorPicking()) {
 			if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y)){ //doprava doleva/nahoru dolu
 				//doprava/doleva
@@ -68,6 +70,7 @@ public class PlayerController : MonoBehaviour {
 	}
 
 	void FireShot(){
+		/*provedeni strelby*/
 		if (!gameController.AmmoEmpty() && !gameController.IsPause() && !gameController.IsColorPicking()){
 			Instantiate (shot, shotSpawn.position, shotSpawn.rotation); 
 			nextFire = (Time.time + fireRate);
@@ -79,7 +82,8 @@ public class PlayerController : MonoBehaviour {
 	{	
 		///////--------------------------------------------poloha/pohyb
 		Vector3 position = new Vector3(0, 0, 0);
-		
+
+		//ovladani klavesnici
 		if (!gameController.UsingLeap ()){
 			float moveHorizontal = Input.GetAxis ("Horizontal");
 			float moveVertical = Input.GetAxis ("Vertical");
@@ -91,6 +95,7 @@ public class PlayerController : MonoBehaviour {
 			rigidbody.rotation = Quaternion.Euler (rigidbody.velocity.z * tilt, 0.0f, rigidbody.velocity.x * -tilt);
 			position = rigidbody.position;
 		}
+		//ovladani leapem
 		else if(gameController.UsingLeap ()){
 			Vector3 controlPosition = Camera.main.ScreenToWorldPoint(leapController.GetControlScreenPosition());
 			
@@ -153,7 +158,7 @@ public class PlayerController : MonoBehaviour {
 				gameController.ColorPickingOff();
 
 			}
-			//TODO: COLORPICKING ASI ZRUSIT
+
 			/*
 			else if (leapController.SecondaryHandInView()){
 				//gameController.UnpauseOnlyGame();
@@ -165,7 +170,7 @@ public class PlayerController : MonoBehaviour {
 			else if(leapController.ControllingHandInView()){
 				//gameController.UnpauseOnlyGame();
 				//gameController.ColorPickingOff();
-				if (leapController.ControllingHandGrab() == 1.0f){
+				if (leapController.ControllingHandGrab() == 1.0f){ //sevřená pěst
 					gameController.PauseOnlyGame();
 				}
 
@@ -188,20 +193,17 @@ public class PlayerController : MonoBehaviour {
 		}
 	}
 	
-
-	void FixedUpdate()
-	{
-
-	}
+	
 
 	public void Activate(){
-		//zobrazi hrace a vyrobi mu ammoslider
+		/*zobrazi hrace a vyrobi mu ammoslider*/
 		if(gameController.UsingLeap() && ammoSlider == null)
 			ammoSlider = (AmmoSlider) Instantiate (ammoSliderPrefab);
 		gameObject.SetActive (true);
 	}
 
 	public void Deactivate(){
+		/*skryje hrace a znici aktualni ammoSlider*/
 		if(gameController.UsingLeap() && ammoSlider != null)
 			Destroy (ammoSlider.gameObject);
 		gameObject.SetActive (false);

@@ -2,6 +2,8 @@
 using System.Collections;
 
 public class EnemyWeaponController : MonoBehaviour {
+	//*třída ovládající střelbu nepřátelských lodí*//
+
 	public GameObject shot;
 	public Transform shotSpawn;
 	public float fireRate;

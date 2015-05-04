@@ -3,6 +3,7 @@ using System.Collections;
 using UnityEngine.UI;
 
 public class ColorPicker : MonoBehaviour {
+	//*výběr barvy lodičky, nepouziva se*//
 	public Image colorBox;
 	public GameObject objectToColor;
 	public int slidersMaxValue;

@@ -4,6 +4,8 @@ using System.Collections;
 using UnityEngine.UI;
 
 public class FadeText : MonoBehaviour {
+	//*text který umožnuje provádět fadeIn a fadeOut*//
+
 	public float fadeDuration;
 	public Text text;
 	bool fadeIn = false;

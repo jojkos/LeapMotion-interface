@@ -2,6 +2,7 @@
 using System.Collections;
 
 public class TutorialPlayerController : MonoBehaviour {
+	/*ovladač tutorialové lodičky*/
 	
 	public Transform shotSpawn;
 	public GameObject shot;

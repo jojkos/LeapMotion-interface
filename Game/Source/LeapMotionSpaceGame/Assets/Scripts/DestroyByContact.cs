@@ -2,6 +2,7 @@
 using System.Collections;
 
 public class DestroyByContact : MonoBehaviour {
+	//*zničení objektu při kontaktu s jiným objektem*//
 
 	public GameObject explosion;
 	public GameObject playerExplosion;

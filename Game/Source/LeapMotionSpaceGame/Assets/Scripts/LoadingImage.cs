@@ -2,11 +2,18 @@
 using System.Collections;
 
 public class LoadingImage : MonoBehaviour {
+	//*třída pro práci s obrázky znazornujícími načítání*//
+
 	public float duration;
 	float startingTime;
 	float endingTime;
+	float lastSelect;
 	bool finished = false;
-	
+
+	void Awake(){
+		lastSelect = Time.realtimeSinceStartup;
+	}
+
 	// Use this for initialization
 	void Start () {
 		renderer.material.SetFloat("_Cutoff",1);//vynulovani
@@ -20,6 +27,7 @@ public class LoadingImage : MonoBehaviour {
 		}
 		else if (value == 0){
 			finished = true;
+			lastSelect = Time.realtimeSinceStartup;
 			gameObject.SetActive(false);
 		}
 	}
@@ -27,6 +35,10 @@ public class LoadingImage : MonoBehaviour {
 	void OnApplicationFocus(bool focusStatus) { //diky tomuhle se nedokonci loading kdyz clovek vyjde na chvili ze hry, mezitim co tam neni
 		if (focusStatus == true)
 			Restart ();
+	}
+
+	public float LastSelected(){
+		return lastSelect;
 	}
 
 	public void EarlyStop(){

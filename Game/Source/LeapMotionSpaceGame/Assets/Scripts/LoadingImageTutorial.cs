@@ -2,6 +2,7 @@
 using System.Collections;
 
 public class LoadingImageTutorial : MonoBehaviour {
+	//*třída umožnující práci s obrázky znazornujícími načítání v rámci tutorialu*//
 	public float duration;
 	float startingTime;
 	float endingTime;

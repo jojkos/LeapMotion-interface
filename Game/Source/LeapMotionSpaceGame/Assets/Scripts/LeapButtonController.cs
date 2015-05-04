@@ -5,11 +5,14 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 
 public class LeapButtonController : MonoBehaviour {
+	//*tlačítka menu ovladatelné pomocí gest a pohybu Leap Motionu*//
+
 	RectTransform rt;
 	Rect rect;
 	Rect worldRect;
 	bool hovering = false;
 	Button thisButton;
+	float afterSelectDelay = 1; //cas po jak dlouhe dobe se tlacitko muze znova zacit vybirat ukazovanim po poslednim vybrani nejakeho tlacitka
 	public LoadingImage loadingCircle;
 	public LeapController leapController;
 	private GameController gameController;
@@ -24,8 +27,10 @@ public class LeapButtonController : MonoBehaviour {
 	Vector3 leftTopCorner;
 	Canvas canvas;
 	
-	//pri zmeneni velikosti okna se zmeni pozice a velikost tlacitek
+
 	void RefreshWorldRect(){
+		/*pri zmeneni velikosti okna se zmeni pozice a velikost tlacitek*/
+
 		//ziskam jeho souradnice ve worldPoints
 		Vector3[] corners = new Vector3[4];
 		//rt.GetWorldCorners (corners);
@@ -39,11 +44,8 @@ public class LeapButtonController : MonoBehaviour {
 		//z nich potrebuju pouze levy horni roh pro vytvoreni Rect
 		worldRect = new Rect (leftTopCorner[0], leftTopCorner[1], rect.width * canvas.scaleFactor, rect.height * canvas.scaleFactor);
 	}
-
-	void Awake(){
-	}
-
-	// Use this for initialization
+	
+	
 	void Start () {	
 
 		//zapisu se do odberu kliknuti prstem do ovladaci rovinny
@@ -80,6 +82,8 @@ public class LeapButtonController : MonoBehaviour {
 	}
 
 	void CheckHovering(){
+		/*zjisteni jestli je prst nad tlacitkem (ma se pustit timer pro vyber tlacitka pri ukazovani)*/
+
 		Vector3 controllerPos = leapController.GetControlScreenPosition ();
 		Vector3 pos = Camera.main.ScreenToWorldPoint(controllerPos);
 
@@ -87,8 +91,10 @@ public class LeapButtonController : MonoBehaviour {
 		
 		RefreshWorldRect ();
 		if (worldRect.Contains (controllerPos) && !hovering) {
-			hovering = true;
-			loadingCircle.Initiate(pos);
+			if (Mathf.Abs((loadingCircle.LastSelected() - Time.realtimeSinceStartup)) >= afterSelectDelay){ //aby se omylem nevybiralo v menu dalsi polozka hned po tom co se neco vybere
+				hovering = true;
+				loadingCircle.Initiate(pos);
+			}
 		}
 		else if(!worldRect.Contains (controllerPos) && hovering){
 			hovering = false;
@@ -108,6 +114,8 @@ public class LeapButtonController : MonoBehaviour {
 
 
 	void OnFingerClick(){
+		/*pri kliknuti se provede klik, pokud uzivatel kliknul do prostoru tlacitka*/
+
 		if(selectMethod == PermanentSelectMethod.Clicking || (gameController.IsClickingMethod() && selectMethod == PermanentSelectMethod.ChosenFromMenu) && !gameController.IsColorPicking()){
 			var pointer = new PointerEventData(EventSystem.current); // pointer event for Execute
 			Vector2 controllerPos = leapController.GetControlScreenPosition ();
@@ -123,6 +131,8 @@ public class LeapButtonController : MonoBehaviour {
 	}
 	
 	void OnFingerRelease(){
+		/*ukonceni kliknuti - odznaceni tlacitka*/
+
 		if(selectMethod == PermanentSelectMethod.Clicking || gameController.IsClickingMethod() && !gameController.IsColorPicking()){
 			var pointer = new PointerEventData(EventSystem.current); // pointer event for Execute
 
@@ -130,6 +140,7 @@ public class LeapButtonController : MonoBehaviour {
 
 		}
 	}
+
 
 	// Update is called once per frame
 	void Update () {

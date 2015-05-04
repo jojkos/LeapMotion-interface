@@ -1,20 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+'''
+Autor: Jonáš Holcner
+Bakalářská práce - Rozhraní pro hry s dataprojektorem a Leap Motion
+
+Program pro kalibraci sestavy projektor - Leap Motion s pomocí ukazováčku uživatelovy pravé ruky
+'''
+
 
 import os, sys, inspect
 from datetime import datetime
 import json
 
-#from threading import Thread
 import Queue
-from PyQt4.uic.Compiler.qtproxies import QtGui
 
+#zarucuje funkcnost v systemech x64 i x86
 src_dir = os.path.dirname(inspect.getfile(inspect.currentframe()))
-arch_dir = 'LeapSDK/lib/x64' if sys.maxsize > 2**32 else 'LeapSDK/lib/x86' #Leap.py se musi nakopirovat do obou
+arch_dir = 'LeapSDK/lib/x64' if sys.maxsize > 2**32 else 'LeapSDK/lib/x86' #Leap.py se musi nakopirovat do obou slozek
 sys.path.insert(0, os.path.abspath(os.path.join(src_dir, arch_dir)))
 
 import Leap
-from Leap import CircleGesture, KeyTapGesture, ScreenTapGesture, SwipeGesture
 import cv2
 import numpy as np
 
@@ -24,27 +29,24 @@ from PyQt4 import QtCore
 
 
 class MyLeap():
+    '''trida zpracovavajici data z Leap Motionu'''
+    
     def __init__(self, headOptimization):
                 
-        self.controller = Leap.Controller()
-        #self.controller.enable_gesture(Leap.Gesture.TYPE_CIRCLE)
-                     
-                
+        self.controller = Leap.Controller()                     
+        
+        #optimalizace pro Leap Motion v pozici vzhuru nohama
         if headOptimization:
             self.controller.set_policy_flags(Leap.Controller.POLICY_OPTIMIZE_HMD|Leap.Controller.POLICY_BACKGROUND_FRAMES) #optimalizace pro pohled zvrchu
         else:
             self.controller.set_policy_flags(Leap.Controller.POLICY_BACKGROUND_FRAMES) #bezi i bez focusu OS
-                            
-        
-                    
-        #self.controller.config.set("Gesture.Circle.MinRadius", 3.0)
-        #self.controller.config.set("Gesture.Circle.MinArc", .3)
+                                                        
         self.controller.config.save()
         
 
-                
-        
+                        
     def get_finger_position(self, index = Leap.Finger.TYPE_INDEX):
+        '''ziskani pozice konecku prstu'''
         frame = self.controller.frame()
         hands = frame.hands
         
@@ -66,6 +68,7 @@ class MyLeap():
 
             
     def avg_finger_position(self, count=10, index = Leap.Finger.TYPE_INDEX):
+        '''zprumerovana pozice konecku prstu prez zvoleny pocet framu'''
         avgpos = [0,0,0]
         lastframe = 0
         for i in range(0, count):
@@ -82,7 +85,7 @@ class MyLeap():
     
   
     def isHand(self, index = Leap.Finger.TYPE_INDEX):
-        '''pro zjisteni jestli je v obraze naka ruka, aby se zbytecne nevykreslovalo, pri pozdejsich optimalizacich zmenit nebo vyhodit'''
+        '''pro zjisteni jestli je v obraze naka ruka, aby se zbytecne nevykreslovalo'''
         frame = self.controller.frame()
         hands = frame.hands        
         found = False
@@ -92,11 +95,11 @@ class MyLeap():
                     if pointable.is_finger:
                         finger = Leap.Finger(pointable)
                         if finger.type() == index:
-                            position =  pointable.tip_position
                             found = True
         return found
     
     def get_pinch_strength(self, index = Leap.Finger.TYPE_INDEX):
+        '''ziskava hodnotu miry stisku pesti'''
         frame = self.controller.frame()
         hands = frame.hands        
         for hand in hands:
@@ -108,6 +111,9 @@ class MyLeap():
         
         
 class Calibration(QtCore.QThread):
+    '''trida ridici prubeh kalibrace'''
+    
+    #PyQT signaly zajizstujici komunikaci s gui
     draw_coordinates = QtCore.pyqtSignal(object)
     clean = QtCore.pyqtSignal(object)
     draw_update = QtCore.pyqtSignal(object)
@@ -129,27 +135,40 @@ class Calibration(QtCore.QThread):
         
         self.leap = MyLeap(self.headOptimization)
         
+        #pocatecni odhad mtx pro projektor Asus S1
         self.mtx = np.float32([[  962,   0.,   self.width/2], #962 doma 2564 ve skole
                                [  0.,   962,   self.height/2],
-                               [  0.,   0.,   1.]])     
+                               [  0.,   0.,   1.]])              
         
         self.dist = np.float32([[ 0., 0.,  0., 0.,  0.]])        
                 
+        #pocet destinnych mist pri tisku cisla
         np.set_printoptions(precision=8,suppress=True)                     
         
+        #nove mereni
         if self.mode == "new":
             self.imagePoints = []#np.array([], np.float32)
             self.worldPoints = []#np.array([], np.float32)                         
             self.count = values['count']            
             self.file = values['file']
-                    
-        elif self.mode == "load" or self.mode == "reproj":
+        
+        #nahravane mereni
+        elif self.mode == "load":
             self.worldPoints = values['worldPoints']
             self.imagePoints = values['imagePoints']
-            #self.mtx = np.float32(values['mtx'])
-            #self.dist = np.float32(values['dist'])
-            #self.rvecs = [np.float32(values['rvecs'])]
-            #self.tvecs = [np.float32(values['tvecs'])]
+
+        #nove mereni reprojekcni chyby    
+        elif self.mode == "reproj":
+            self.worldPoints = values['worldPoints']
+            self.imagePoints = values['imagePoints']            
+            self.file = values['reprojFile']
+        
+        #vypocet nahraneho mereni reproj
+        elif self.mode == "reprojLoad":
+            self.worldPoints = values['worldPoints']
+            self.imagePoints = values['imagePoints']              
+            self.reprojWorldPoints = values['reprojWorldPoints']
+            self.reprojImagePoints = values['reprojImagePoints']
                          
                         
         
@@ -170,7 +189,7 @@ class Calibration(QtCore.QThread):
         repeat = False
         while True:
             if repeat:
-                start = datetime.now()
+                start = datetime.now() #timer
                 points = []
                 repeat = False
             if len(points) == 0:            
@@ -193,21 +212,21 @@ class Calibration(QtCore.QThread):
             end = datetime.now()
             interval = end-start
             if interval.seconds >=waitTime:
-                if len(points) > 4: #aspon 4 namerene body, tzn dostatecne presne
+                if len(points) > 4: #aspon 4 namerene body
                     break
                 else:
                     repeat = True      
             
         #print x, y
-        worldpoint = self.leap.avg_finger_position(10) #TODO mozna radsi prumerovat uz pres ty namereny              
+        worldpoint = self.leap.avg_finger_position(10)               
         
         self.clean.emit("")  
         self.draw_update.emit(None)        
         
-        return [x,y], worldpoint
-        #self.save_points([x,y], worldpoint)        
+        return [x,y], worldpoint     
     
-    def calibration(self):                            
+    def calibration(self):      
+        '''volani sekvence jednotlivych bodu pro matici 3*3 bodu'''                      
         points = []
         i = 0        
         while i < self.count:         
@@ -259,6 +278,7 @@ class Calibration(QtCore.QThread):
                 pointsStr += str(point[0])+"    "+str(point[1])+"\n"
             self.confirm_points.emit(pointsStr)
             
+            #cekani na potvrzeni sady bodu od uzivatele
             while self.queue.empty():
                 pass
             ok = self.queue.get(0)        
@@ -276,6 +296,7 @@ class Calibration(QtCore.QThread):
             points = []
                 
     def reprojection(self):        
+        '''sekvence pro 5*5 matici urcene k vypoctu reprojekcni chyby'''
         points = []
         self.shift += 10 #aby se to lisilo od kalibracnich
         
@@ -306,6 +327,7 @@ class Calibration(QtCore.QThread):
                      
                             
     def reproject(self):
+        '''vypocet chyby reprjekce z namerenych bodu pro zadanou kalibraci'''
         total = 0
         count = len(self.worldPoints)                 
         for i in range(count):
@@ -322,8 +344,18 @@ class Calibration(QtCore.QThread):
         avg = np.sqrt(total/count)
         print "reprojection error:"
         print avg
+        
+        if self.mode == "reproj":
+            output = {}
+            output['imagePoints'] = self.imagePoints
+            output['worldPoints'] = self.worldPoints
+                                                                    
+            
+            self.file.write(json.dumps(output))        
+            self.file.close()         
                 
-    def calibrate(self): #kalibrace v prostoru            
+    def calibrate(self):
+        '''vypocet kalibrace z namerenych bodu'''          
         if not self.shouldRun:
             return  
                                        
@@ -367,9 +399,45 @@ class Calibration(QtCore.QThread):
                                                                     
             
             self.file.write(json.dumps(output))        
-            self.file.close()                                                 
+            self.file.close()
+            
+    def calibrateFirstPlane(self):
+        '''bez vstupni odhadovane camera matrix, jen pro prvni rovinu 3*3 bodu, nepouziva se'''        
+        if not self.shouldRun:
+            return  
+        
+        
+        worldPointsZero = []
+        for point in self.worldPoints[0:9]:
+            worldPointsZero.append([point[0], point[1] ,0])
+        
+        self.worldPointsNP = np.array([worldPointsZero], np.float32) #upravene pro numpy(NP)
+        self.imagePointsNP = np.array([self.imagePoints[0:9]], np.float32)
+                                               
+        self.ret, self.mtx, self.dist, self.rvecs, self.tvecs = cv2.calibrateCamera(self.worldPointsNP, self.imagePointsNP, (self.width,self.height), None, None)
+        
+        print "---"
+        print "mtx:"
+        print self.mtx
+        print "---"
+        print "rvecs:"
+        print self.rvecs
+        print "---"
+        print "tvecs:"
+        print self.tvecs       
+        print "---"
+        print "dist:"
+        print self.dist
+        print "---"
+        print "ret/reproj error:"
+        print self.ret         
+                                                                                                            
+                                                                                     
+                                     
+                                                             
 
     def intersection_point_line(self,point,lineStart,lineEnd):
+        '''vzdalenost bodu od primky v prostoru, nepouziva se'''
         #https://www.youtube.com/watch?v=uxYaIWhlBTc
         x1 = np.array(lineStart) #vychozi bod a prametricke vyjadreni
         x2 = np.array(lineEnd)
@@ -386,7 +454,37 @@ class Calibration(QtCore.QThread):
         #dist = np.linalg.norm(P-A)
         return P                       
         
-    def test(self):    
+    def test(self): 
+        '''test kalibrace - prepocet polohy prstu ze souradnic Leapu do souradnic projektoru'''
+        #z o par radku niz zkoporivoanej vypocet polohy projektoru
+                
+        #=======================================================================
+        # r = cv2.Rodrigues(self.rvecs[-1])[0]
+        # #print r,"\n" #3*3 output vector
+        # rt = np.float32([[  r[0][0],   r[0][1],   r[0][2],   self.tvecs[-1][0]],
+        #                  [  r[1][0],   r[1][1],   r[1][2],   self.tvecs[-1][1]],
+        #                  [  r[2][0],   r[2][1],   r[2][2],   self.tvecs[-1][2]],
+        #                  [ 0,0,0,1] ]) 
+        # print rt
+        # invrt = np.linalg.inv(rt)
+        # print invrt        
+        #   
+        # zero = np.float32([0,0,0,1])      
+        # print "pozice projektoru vuci leapu"  
+        # print np.dot(invrt,zero) #POZICE PROJEKTORU VUCI LEAPU
+        #  
+        #  
+        # rvecProj = np.float32([[  invrt[0][0],   invrt[0][1],   invrt[0][2]],
+        #                        [  invrt[1][0],   invrt[1][1],   invrt[1][2]],
+        #                        [  invrt[2][0],   invrt[2][1],   invrt[2][2],]])
+        # rvecProj = cv2.Rodrigues(rvecProj)"
+        # print "poloha projektoru vuci Leapu"
+        # print rvecProj[0] #rotace PROJEKTORU VUCI LEAPU mozna?
+        #  
+        # input("cekam")        
+        #=======================================================================
+        
+           
         if self.leap.isHand(): #pokud ma cenu vysilat
             if 'self.lastposition' not in locals():
                 self.lastposition = 0        
@@ -398,15 +496,20 @@ class Calibration(QtCore.QThread):
                 
                 worldPoints = np.float32([[position[0],position[1],position[2]]]).reshape(-1,3) #3D
                 # worldPoints = np.float32([position[0],position[1],0]).reshape(-1,3)
+                
+                #prepocet bodu
                 imgpts, jac = cv2.projectPoints(worldPoints, self.rvecs[-1], self.tvecs[-1] , self.mtx, self.dist)
                                           
+                
+                '''rucni vypocet transformace, nepouziva se - lisi se od vypoctu projectPoints'''
                 
                 #print self.rvecs[-1],"\n"
                 r = cv2.Rodrigues(self.rvecs[-1])[0]
                 #print r,"\n" #3*3 output vector
                 rt = np.float32([[  r[0][0],   r[0][1],   r[0][2],   self.tvecs[-1][0]],
                                  [  r[1][0],   r[1][1],   r[1][2],   self.tvecs[-1][1]],
-                                 [  r[2][0],   r[2][1],   r[2][2],   self.tvecs[-1][2]]]) #,[ 0,0,0,1] ]
+                                 [  r[2][0],   r[2][1],   r[2][2],   self.tvecs[-1][2]]]) 
+                #dalsi radek pokud chci pouzit zakomentovanou cast za timto,[ 0,0,0,1] ]
                 
                 #===============================================================
                 # invrt = np.linalg.inv(rt)
@@ -443,34 +546,42 @@ class Calibration(QtCore.QThread):
                 #self.draw_coordinates.emit([uv[0][0],uv[1][0]])  #rucni vypocet
                 #self.draw_coordinates.emit([imgpts[0][0][0], imgpts[0][0][1], uv[0][0], uv[1][0], self.leap.get_pinch_strength()]) #oboje
                 
-                
+                #vypisovani opencv a rucniho vypoctu do platna
                 self.result_points.emit([[round(imgpts[0][0][0],3),round(imgpts[0][0][1],3)],[round(uv[0][0],3),round(uv[1][0],3)]])
-                self.draw_update.emit(None)
+                #rekne to ze se to ma zmenit
+                self.draw_update.emit(None) 
     
     def run(self):
+        '''spusteni tridy podle zvoleneho modu'''
         if self.mode == "new":
             self.calibration()
         
-        if self.shouldRun:                           
+        if self.shouldRun:                                       
+            #self.calibrateFirstPlane()
             self.calibrate()
         
-        if self.shouldRun and self.mode == "reproj":
+        if self.shouldRun and self.mode == "reproj":        
             self.reprojection()
             self.reproject()
-                                                        
+        elif self.shouldRun and self.mode == "reprojLoad":
+            self.worldPoints =  self.reprojWorldPoints
+            self.imagePoints =   self.reprojImagePoints
+            self.reproject()
+            
         while self.shouldRun:
             self.test()
         
             
 
 class ConfirmDialog(QtGui.QDialog):
+    '''dialog pro potvrzeni/odmitnuti namerenych bodu jednoho kalibracniho prubehu'''
     def __init__(self, points, parent = None):
         super(ConfirmDialog, self).__init__(parent,QtCore.Qt.WindowSystemMenuHint | QtCore.Qt.WindowTitleHint)
         
         #modalni okno
         self.setWindowModality(QtCore.Qt.ApplicationModal)
         
-        self.setWindowTitle('points OK?')    
+        self.setWindowTitle('add points or retry?')    
         
         self.layout = QtGui.QVBoxLayout(self)
         
@@ -493,8 +604,8 @@ class ConfirmDialog(QtGui.QDialog):
         return  result == QtGui.QDialog.Accepted   
             
     
-class CalibWindow (QtGui.QGraphicsView): #QtGui.QWidget
-    
+class CalibWindow (QtGui.QGraphicsView): 
+    '''okno ve kterem probiha kalibrace - vykresluji se jednotlive body'''        
     def __init__(self, values):
         super(CalibWindow, self).__init__()
                 
@@ -505,6 +616,7 @@ class CalibWindow (QtGui.QGraphicsView): #QtGui.QWidget
         self.height = values['height']
         self.queue = Queue.Queue()
         
+        #body ktere se premazavaji ve scene
         self.cleanable = []
         
         #self.view = View(self)
@@ -539,6 +651,7 @@ class CalibWindow (QtGui.QGraphicsView): #QtGui.QWidget
     
     
     def on_position(self, coordinates):
+        '''vypis souradnic promitaneho bodu'''
         projPoints = QtGui.QGraphicsSimpleTextItem(str(coordinates[0][0])+","+str(coordinates[0][1]))
         #projPoints = QtGui.QGraphicsSimpleTextItem(str(coordinates[0][0])+","+str(coordinates[0][1])+"\n"+str(coordinates[1][0])+","+str(coordinates[1][1]))#jedno pres openCV, jedno rucne spocitane        
         self.scene().addItem(projPoints)
@@ -546,6 +659,7 @@ class CalibWindow (QtGui.QGraphicsView): #QtGui.QWidget
           
     
     def contextMenuEvent(self, event):
+        '''zavreni okna pomoci kontextove menu dostupneho pres druhe tlacitko mysi'''
         menu = QtGui.QMenu(self)
         quitAction = menu.addAction("Close")
         action = menu.exec_(self.mapToGlobal(event.pos()))
@@ -553,13 +667,16 @@ class CalibWindow (QtGui.QGraphicsView): #QtGui.QWidget
             self.close()        
     
     def on_confirm(self, points):
+        '''potvrzeni/odmitnuti namerenych bodu'''
         ok = ConfirmDialog.getResult(points)    
         self.queue.put(ok)
     
     def on_update(self, data):
+        '''prekresleni sceny'''
         self.update()
     
     def on_draw(self, xy):
+        '''vykresleni bodu signalem'''
         #projectPoints
         x = xy[0]
         y = xy[1]        
@@ -588,22 +705,26 @@ class CalibWindow (QtGui.QGraphicsView): #QtGui.QWidget
             
                       
     def draw(self, x, y, r=33):
+        '''vykresleni bodu'''
         pen = QtGui.QPen(QtGui.QColor(QtCore.Qt.blue))
         brush = QtGui.QBrush(pen.color().darker(150))
 
         self.scene().addEllipse(x-r/2,y-r/2,r,r, pen, brush)
     
     def on_clean(self, data):
+        '''vymazani nepotrebnych objektu ze sceny signalem'''
         #for item in self.items():
         for item in self.cleanable:
             self.scene().removeItem(item)
         self.cleanable = []        
         
     def clean_window(self):
+        '''vymazani nepotrebnych objektu ze sceny'''
         for item in self.items():            
                 self.scene().removeItem(item)
          
     def mousePressEvent(self, event):
+        '''leve tlacitko posouva oknem, prave tlacitko vyvolava kontextove menu'''
         if event.button() == QtCore.Qt.LeftButton:
             self.offset = event.pos()
         
@@ -611,6 +732,7 @@ class CalibWindow (QtGui.QGraphicsView): #QtGui.QWidget
             self.contextMenuEvent(event)
     
     def mouseMoveEvent(self, event):
+        '''pohyb okna'''
         x=event.globalX()
         y=event.globalY()
         x_w = self.offset.x()
@@ -619,12 +741,13 @@ class CalibWindow (QtGui.QGraphicsView): #QtGui.QWidget
         
     
     def closeEvent(self, *args, **kwargs):
+        '''pri zavreni okna se prerusi bezici kalibrace'''
         #pro ukonceni threadu pri zavreni okna        
         self.calibration.shouldRun = False
              
         
 class MainWindow(QtGui.QWidget):
-    
+    '''hlavni okno aplikace s vyberem nastaveni a spoustenim kalibrace'''
     def __init__(self):
         super(MainWindow, self).__init__()                                
         
@@ -635,10 +758,10 @@ class MainWindow(QtGui.QWidget):
         self.countLabel = QtGui.QLabel('Cycles')
         self.shiftLabel = QtGui.QLabel('Shift')
 
-        self.widthEdit = QtGui.QLineEdit()
+        self.widthEdit = QtGui.QLineEdit()        
         self.widthEdit.setText("800")
         self.heightEdit = QtGui.QLineEdit()
-        self.heightEdit.setText("600")
+        self.heightEdit.setText("600")     
         self.countEdit = QtGui.QLineEdit()
         self.countEdit.setText("1")
         self.shiftEdit = QtGui.QLineEdit()
@@ -650,7 +773,7 @@ class MainWindow(QtGui.QWidget):
         
         self.calibrateButton = QtGui.QPushButton("Calibrate")
         self.calibrateButton.clicked.connect(self.calibrate)
-        self.calibrateButton.setMaximumWidth(70)
+        self.calibrateButton.setMaximumWidth(300)
         
         self.loadButton = QtGui.QPushButton("Load")
         self.loadButton.clicked.connect(lambda: self.loadCalibration("load"))
@@ -658,22 +781,26 @@ class MainWindow(QtGui.QWidget):
         
         self.reprojButton = QtGui.QPushButton("Reprojection")
         self.reprojButton.clicked.connect(lambda: self.loadCalibration("reproj"))      
-        self.reprojButton.setMaximumWidth(70)                
+        self.reprojButton.setMaximumWidth(70)
+        
+        self.reprojLoadButton = QtGui.QPushButton("ReprojLoad")
+        self.reprojLoadButton.clicked.connect(lambda: self.loadCalibration("reprojLoad"))      
+        self.reprojLoadButton.setMaximumWidth(70)                            
 
         self.grid = QtGui.QGridLayout()
-        self.grid.setSpacing(10)        
+        self.grid.setSpacing(10)            
         
         #udrzeni centrovani bez roztahovani
         self.grid.setColumnStretch(0,1)
         self.grid.setColumnStretch(3,1)
         self.grid.setRowStretch(0,1)
-        self.grid.setRowStretch(7,1)
+        self.grid.setRowStretch(10,1)
         
         self.grid.addWidget(self.widthLabel, 1, 1)
         self.grid.addWidget(self.widthEdit, 1, 2)
 
         self.grid.addWidget(self.heightLabel, 2, 1)
-        self.grid.addWidget(self.heightEdit, 2, 2)
+        self.grid.addWidget(self.heightEdit, 2, 2)            
         
         self.grid.addWidget(self.countLabel, 3, 1)
         self.grid.addWidget(self.countEdit, 3, 2)
@@ -683,10 +810,17 @@ class MainWindow(QtGui.QWidget):
 
         self.grid.addWidget(self.headOptimization, 5, 2)
         
-        self.grid.addWidget(self.calibrateButton, 6, 1)      
-        self.grid.addWidget(self.loadButton, 6, 2)
-        self.grid.addWidget(self.reprojButton, 7, 2)  
+        self.grid.addWidget(self.calibrateButton, 6, 1, 1, 2)      
+ 
 
+        toto = QtGui.QFrame()
+        toto.setFrameShape(QtGui.QFrame.HLine)
+        toto.setFrameShadow(QtGui.QFrame.Sunken)
+        self.grid.addWidget(toto, 7, 1, 1, 2)
+        
+        self.grid.addWidget(self.loadButton, 8, 1)
+        self.grid.addWidget(self.reprojButton, 9, 1)
+        self.grid.addWidget(self.reprojLoadButton, 9, 2)         
         
         self.setLayout(self.grid) 
                 
@@ -697,13 +831,15 @@ class MainWindow(QtGui.QWidget):
         QtGui.QApplication.focusWidget().clearFocus() #odstrani pocatecni focus
             
         
-    def calibrate(self):        
+    def calibrate(self):       
+        '''vyber souboru pro ulozeni kalibrace a spusteni kalibrace''' 
         values = self.getValues()
         values['mode'] = "new"
          
-        fname = QtGui.QFileDialog.getSaveFileName(self)
+        fname = QtGui.QFileDialog.getSaveFileName(self, "Save calibration")
         if fname == "":
             return
+        fname = unicode(fname)
                          
         f = open(fname, 'w')          
         values['file'] = f
@@ -714,12 +850,14 @@ class MainWindow(QtGui.QWidget):
             
         
     def loadCalibration(self, mode):
+        '''vyber souboru pro nahrani ulozene kalibrace a spusteni'''
         values = self.getValues()
         values['mode'] = mode        
-        fname = QtGui.QFileDialog.getOpenFileName(self)   
+        fname = QtGui.QFileDialog.getOpenFileName(self, "Open saved calibration")   
         if fname == "":
             return
-             
+        fname = unicode(fname)
+        
         f = open(fname, 'r')                
         data = f.readline()
         f.close()
@@ -734,23 +872,40 @@ class MainWindow(QtGui.QWidget):
         values['tvecs'] = data['tvecs']
         values['dist'] = data['dist'] 
         values['headOptimization'] = self.headOptimization.isChecked()
+        if mode == 'reproj':
+            f = open(fname+"-reproj", 'w')  
+            values['reprojFile'] =  f
+            
+        if mode == 'reprojLoad':
+            fname = QtGui.QFileDialog.getOpenFileName(self, "Open saved reprojection points of chosen calibration")   
+            if fname == "":
+                return
+            fname = unicode(fname)
+            
+            f = open(fname, 'r')                
+            data = f.readline()
+            f.close()       
+            data = json.loads(data)     
+            values['reprojWorldPoints'] = data['worldPoints']
+            values['reprojImagePoints'] = data['imagePoints']           
         
         self.calibWindow.append(CalibWindow(values)) 
         self.calibWindow[-1].show()
     
     def getValues(self):
+        '''cteni hodnot nastavenych v hlavnim okne'''
         values = {}
         values['width'] = int(self.widthEdit.text())
         values['height'] = int(self.heightEdit.text())
         values['count'] = int(self.countEdit.text())
         values['shift'] = int(self.shiftEdit.text())                
         values['headOptimization'] = self.headOptimization.isChecked()
+        
         return values
     
                  
         
 def main():
-    #TODO zrusit thread kdyz se prerusi v prubehu kalibrace ne az v testu
     app = QtGui.QApplication(sys.argv)
     ex = MainWindow()
     sys.exit(app.exec_())

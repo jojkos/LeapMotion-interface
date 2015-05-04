@@ -9,12 +9,11 @@ using SimpleJSON;
 using Leap;
 using System.Runtime.InteropServices;
 
-//TODO nejak vypsat kdyz je vyplej leap, stejne jako kdyz neni inputs soubor a tak!! automaticky zmenit na mys? pridat do settings mys?
-//TODO: LEAP NENI PRIPOJENEJ TAK NEPUSTIT HRU NEBO NVM
-
 
 //BEZ LISTENERU NEFUNGUJI DOBRE GESTA, unity Update neni tak casto jako novy Frame z leapu
 public class MyLeapListener : Listener{
+	//*třída poslouchající přichod dat z Leapu*//
+
 	LeapController myLeapController;
 
 	public MyLeapListener(LeapController controller){
@@ -43,6 +42,8 @@ public class MyLeapListener : Listener{
 }
 
 public class LeapController : MonoBehaviour {
+	/*třída zastřešující práci s Leap Motion controllerem*/
+
 	public enum HandType{RightHand, LeftHand};
 	public HandType controllingHandType;
 
@@ -74,9 +75,9 @@ public class LeapController : MonoBehaviour {
 	public delegate void OnSwipeEvent(Vector3 direction);
 	public event OnSwipeEvent OnSwipe;
 
-	public delegate void OnFingerClickEvent();
+	public delegate void OnFingerClickEvent(); //udalost oznamujici kliknuti (pro ovladaci prvky jako tlacitka)
 	public event OnFingerClickEvent OnFingerClick;
-	public delegate void OnFingerReleaseEvent();
+	public delegate void OnFingerReleaseEvent(); //udalost oznamujici konec kliknuti 
 	public event OnFingerClickEvent OnFingerRelease;
 
 
@@ -90,6 +91,7 @@ public class LeapController : MonoBehaviour {
 	bool pressed = false;
 
 	public void Tap(KeyTapGesture gesture){
+		/**/
 		Hand hand = gesture.Hands [0];
 		if (controllingHandType == HandType.RightHand && hand.IsRight || controllingHandType == HandType.LeftHand && hand.IsLeft) {
 			if (gesture.Pointable.IsFinger){
@@ -126,12 +128,11 @@ public class LeapController : MonoBehaviour {
 
 	void Awake () {
 		controller = new Controller ();
-		leapListener = new MyLeapListener (this); //listener zpusobuje ze hra nejde zavrit
+		leapListener = new MyLeapListener (this); //listener muze zpusobit ze hra nejde zavrit
 		controller.AddListener (leapListener);
 
 		string inputs = "";
-		//TRY EXCEPT NAKA CHYBA KDYZ NENI SPRAVNY INPUTS
-		//TODO nebo to takhle staci?
+		//chybejici inputs.txt
 		try{
 			inputs = System.IO.File.ReadAllText(Application.dataPath + "/inputs.txt");
 		}
@@ -142,6 +143,8 @@ public class LeapController : MonoBehaviour {
 		}
 		isFile = true;
 
+
+		/*nacteni kalibrace ze souboru*/
 		var parsed = JSON.Parse (inputs);
 		
 		calwidth = parsed ["width"].AsInt;
@@ -176,11 +179,9 @@ public class LeapController : MonoBehaviour {
 		eventSystem = EventSystem.current; //pro ovladani slideru a jinych selecatables
 		frame = controller.Frame ();//poprve tady a pak v kazdym updatu
 		lastSeenControlHandFrame = frame;
-		
+
+		/*nastaveni parametru pro Leap Motion*/
 		controller.SetPolicy(Controller.PolicyFlag.POLICY_OPTIMIZE_HMD|Controller.PolicyFlag.POLICY_BACKGROUND_FRAMES);
-		/*controller.EnableGesture (Gesture.GestureType.TYPESWIPE); //mozna to potom presunout do update, jen kdyz je potreba aby bylo zaply	
-		controller.Config.SetFloat("Gesture.Swipe.MinLength", 60.0f);
-		controller.Config.SetFloat("Gesture.Swipe.MinVelocity", 700f);*/
 		controller.EnableGesture (Gesture.GestureType.TYPEKEYTAP);
 		controller.Config.SetFloat("Gesture.KeyTap.MinDownVelocity", 30.0f);
 		controller.Config.SetFloat("Gesture.KeyTap.HistorySeconds", .1f);
@@ -204,10 +205,12 @@ public class LeapController : MonoBehaviour {
 
 
 	public bool IsFile(){
+		/*testuje pritomnost inputs.txt*/
 		return isFile;
 	}
 	
 	Finger GetFinger(Hand hand, Finger.FingerType fingerType = Finger.FingerType.TYPE_INDEX){
+		/*vyhleda objekt pozadovaneho prstu*/
 		foreach (Finger finger in hand.Fingers) {
 			if (finger.Type() == fingerType){
 				return finger;
@@ -217,6 +220,7 @@ public class LeapController : MonoBehaviour {
 	}
 	
 	public Vector GetFingerJointPosition(Hand hand, Finger.FingerType fingerType = Finger.FingerType.TYPE_INDEX, Bone.BoneType boneType = Bone.BoneType.TYPE_INTERMEDIATE){		
+		/*pozice kloubu pozadovaneho prstu*/
 		FingerList fingers = hand.Fingers;
 		Finger resFinger;
 		Bone resBone;
@@ -234,7 +238,8 @@ public class LeapController : MonoBehaviour {
 		return position;
 	}
 	
-	Vector GetFingerTipPosition(Hand hand, Finger.FingerType fingerType = Finger.FingerType.TYPE_INDEX){		
+	Vector GetFingerTipPosition(Hand hand, Finger.FingerType fingerType = Finger.FingerType.TYPE_INDEX){	
+		/*pozice konecku prstu*/
 		FingerList fingers = hand.Fingers;
 		Finger indexFinger;
 		Vector position = Vector.Zero;
@@ -251,9 +256,10 @@ public class LeapController : MonoBehaviour {
 		return position;
 	}
 	
-	//body z prostoru leapu prevede do bodu v obrazovce
+
 	Vector3 ProjectPointsToScreen(Vector position){
-		//zezvrchu
+		/*body z prostoru leapu prevede do bodu v obrazovce*/
+
 		objectPoints [0] = position.x;
 		objectPoints [1] = position.y;
 		objectPoints [2] = position.z;
@@ -272,7 +278,8 @@ public class LeapController : MonoBehaviour {
 	}
 	
 	Vector3 ProjectFingerTipToGame(Hand hand, Finger.FingerType fingerType = Finger.FingerType.TYPE_INDEX){
-		//prevede pozici konecku prstu ze souradnic leapu do svetovych souradnich hry
+		/*prevede pozici konecku prstu ze souradnic leapu do svetovych souradnich hry*/
+
 		Vector position = GetFingerTipPosition (hand, fingerType);
 		Vector3 screenpos = ProjectPointsToScreen (position);
 		Vector3 retpos = Camera.main.ScreenToWorldPoint(screenpos);
@@ -283,6 +290,8 @@ public class LeapController : MonoBehaviour {
 	
 	
 	public void DrawOnPalm(Hand hand, GameObject gameobject){
+		/*kresleni na dlan uzivatele*/
+
 		Vector position = hand.PalmPosition;
 		
 		Vector3 screenpos = ProjectPointsToScreen (position);
@@ -315,6 +324,7 @@ public class LeapController : MonoBehaviour {
 	}
 	
 	public float AngleBetweenFingers(Hand hand, Finger.FingerType fingerType1 = Finger.FingerType.TYPE_THUMB, Finger.FingerType fingerType2 = Finger.FingerType.TYPE_INDEX){
+		/*zjisti uhel mezi dvema prsty*/
 		Finger finger1 = null;
 		Finger finger2 = null;
 		
@@ -333,6 +343,8 @@ public class LeapController : MonoBehaviour {
 	}
 
 	public Hand GetControllingHand(){
+		/*vrati objekt ruky ktera je nastavena jako ovladaci*/
+
 		Hand controllingHand = null;
 		foreach (Hand hand in frame.Hands) {
 			if(controllingHandType == HandType.RightHand && hand.IsRight)
@@ -351,6 +363,8 @@ public class LeapController : MonoBehaviour {
 	}
 
 	public Hand GetSecondaryHand(){
+		/*vrati objekt ruky ktera neni nastavena jako ovladaci*/
+
 		Hand secondaryHand = null;
 		foreach (Hand hand in frame.Hands) {
 			if(controllingHandType == HandType.RightHand && hand.IsLeft)
@@ -366,6 +380,7 @@ public class LeapController : MonoBehaviour {
 	}
 
 	public bool ControllingHandInView(){
+		/*testuje pritomnost ovladaci ruky v obraze*/
 		if(GetControllingHand() == null)
 			return false;
 		else
@@ -373,6 +388,7 @@ public class LeapController : MonoBehaviour {
 	}
 
 	public bool SecondaryHandInView(){
+		/*testuje pritomnost neovladaci ruky v obraze*/
 		if(GetSecondaryHand() == null)
 			return false;
 		else
@@ -381,6 +397,8 @@ public class LeapController : MonoBehaviour {
 	
 
 	public void ChangeControllingHand(string handtype){
+		/*prenastaveni ovladaci ruky*/
+
 		switch (handtype) {
 		case "right": 
 			controllingHandType = HandType.RightHand;
@@ -393,9 +411,10 @@ public class LeapController : MonoBehaviour {
 			break;
 		}
 	}
-
-	//chovani jako pozice mysi, pro ovladani menu a jinych prvku - ukazovacek pravek ruky (melo by jit nastavit jestli je ovladaci prava nebo leva TODO do settings)
+	
 	public Vector3 GetControlScreenPosition(){
+		/*Vraci pozici kontrolniho prvku tedy ukazovacku ovladaci ruky stejnym zpusobem jako se vraci pozice kurzoru mysi. Pro ovladani menu a jinych prvku.*/
+
 		Hand controllingHand = GetControllingHand();
 
 		//ovladaci ruka neni v obraze
@@ -410,6 +429,7 @@ public class LeapController : MonoBehaviour {
 	}
 
 	public Vector3 GetControlLeapWorldPosition(){
+		/*pozice ukazovacku ovladaci ruky v souradnicih Leap Motion*/
 		Hand controllingHand = GetControllingHand ();
 		
 		//ovladaci ruka neni v obraze
@@ -424,6 +444,8 @@ public class LeapController : MonoBehaviour {
 	}
 
 	public Vector3 GetControlJointPosition(){
+		/*pozice kloubu ovladaciho prstu (pro vykreslovani nabojniku)*/
+
 		Hand controllingHand = GetControllingHand();
 		
 		//ovladaci ruka neni v obraze
@@ -438,6 +460,7 @@ public class LeapController : MonoBehaviour {
 	}
 
 	public float ControllingHandGrab(){
+		/*mira stisku ovladaci ruky*/
 		Hand controllingHand = GetControllingHand();
 		
 		//ovladaci ruka neni v obraze
@@ -450,7 +473,8 @@ public class LeapController : MonoBehaviour {
 	
 
 	public Quaternion GetControlRotation(){
-		//natoceni ukazovacku ovladaci ruky prepocitane podle RVEC
+		/*natoceni ukazovacku ovladaci ruky prepocitane podle RVEC*/
+
 		Hand controllingHand = GetControllingHand();
 
 		//ovladaci ruka neni v obraze
@@ -469,6 +493,8 @@ public class LeapController : MonoBehaviour {
 	}
 
 	public Plane ControllingHandPlane(){
+		/*vypocet klikaci roviny podle polozene rozlozene ruky - nepouziva se, nebylo presne*/
+
 		Hand controllingHand = GetControllingHand ();
 
 		//ovladaci ruka neni v obraze
@@ -489,12 +515,14 @@ public class LeapController : MonoBehaviour {
 	}
 
 	public void SetClickPlane(Plane plane){
+		/*nastaveni rovinny pro urceni kliknuti*/
 		clickPlane = plane;
 		clickPlaneSet = true;
 	}
 
 	void CheckForClick(){
-		//zjistuje jestli se kliklo prstem v nastavene klikaci rovine
+		/*zjistuje jestli se kliklo prstem v nastavene klikaci rovine*/
+
 		Hand controllingHand = GetControllingHand ();
 		
 		//ovladaci ruka neni v obraze

@@ -2,6 +2,7 @@
 using System.Collections;
 
 public class DestroyByTime : MonoBehaviour {
+	//*zničení objektu po dané časové době*//
 
 	private ParticleSystem ps;
 	

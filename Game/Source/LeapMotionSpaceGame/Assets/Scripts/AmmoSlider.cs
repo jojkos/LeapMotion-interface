@@ -5,6 +5,7 @@ using UnityEngine.UI;
 using System.Linq;
 
 public class AmmoSlider : MonoBehaviour {
+	//*zobrazovač naboju na prstu, umožnuje nastavit šířku, pozici a hodnotu, mění barvu podle plnosti*//
 	public int ammoPerSlider;
 	public GameObject slider;
 	
@@ -49,6 +50,8 @@ public class AmmoSlider : MonoBehaviour {
 	}
 
 	public void SetPosRot(Vector3 pos, Quaternion rot){
+		/*nastaveni pozice a rotace*/
+
 		Vector3 euler = rot.eulerAngles;
 		int mainShift = 20; //o kolik sou vsechny slidery posunute
 		int shift = 20;   //mezera mezi kazdym dalsim sliderem

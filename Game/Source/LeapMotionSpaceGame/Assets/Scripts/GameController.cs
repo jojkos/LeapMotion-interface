@@ -2,6 +2,7 @@
 using System.Collections;
 
 public class GameController : MonoBehaviour {
+	//*Třída zastřešující běh celé hry*//
 
 	public GameObject[] hazards;
 	public GameObject[] bonuses;
@@ -89,9 +90,9 @@ public class GameController : MonoBehaviour {
 		loadingHand.Initiate (new Vector3(0, 0, 5));
 		StartCoroutine ("GetPalmPlane");
 	}
-
-	//TODO pridat vsude hromadu komentaru
-	IEnumerator GetPalmPlane (){ //nepouzivam kvuli spatne efektivite
+	
+	IEnumerator GetPalmPlane (){
+		/*zjsteni roviny dlane pro urceni klikaci roviny - nepouziva se, nepresne*/
 		Plane plane;
 		Plane firstPlane;
 
@@ -120,6 +121,7 @@ public class GameController : MonoBehaviour {
 	}
 
 	void ClickPlaneScanned(Plane plane){
+		/*potvrzeni nasnimani klikaci roviny*/
 		leapController.SetClickPlane (plane);
 		if (tutorial.isTutorial)
 			tutorial.PlaneScanned();
@@ -210,6 +212,7 @@ public class GameController : MonoBehaviour {
 	}
 
 	Vector3 RandomSpawnPosition(){
+		/*nahodna pozice pro spawn nepratel*/
 		Vector3 spawnPosition;
 		if(!screenBoundary){
 			spawnPosition = new Vector3 (Random.Range (-spawnValues.x, spawnValues.x), 0.0f, spawnValues.z);
@@ -228,6 +231,8 @@ public class GameController : MonoBehaviour {
 	}
 
 	IEnumerator SpawnWaves (){
+		/*prubeh jednotlivych kol/vln hry*/
+
 		yield return new WaitForSeconds (waveWait);
 
 		while (true) {
