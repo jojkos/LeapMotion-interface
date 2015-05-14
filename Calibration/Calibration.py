@@ -73,7 +73,7 @@ class MyLeap():
         lastframe = 0
         for i in range(0, count):
             while True:
-                position, frame = self.get_finger_position(index)
+                position, frame = self.get_finger_position(index)                
                 if position and lastframe != frame:
                     avgpos[0] += position[0]
                     avgpos[1] += position[1]
@@ -81,7 +81,7 @@ class MyLeap():
                     lastframe = frame
                     break
         #print avgpos
-        return [avgpos[0]/count,avgpos[1]/count,avgpos[2]/count]        
+        return [avgpos[0]/count,avgpos[1]/count,avgpos[2]/count]     
     
   
     def isHand(self, index = Leap.Finger.TYPE_INDEX):
@@ -140,7 +140,9 @@ class Calibration(QtCore.QThread):
                                [  0.,   962,   self.height/2],
                                [  0.,   0.,   1.]])              
         
-        self.dist = np.float32([[ 0., 0.,  0., 0.,  0.]])        
+        self.dist = np.float32([[ 0., 0.,  0., 0.,  0.]])
+        
+        self.pixelToMM = 1.315        
                 
         #pocet destinnych mist pri tisku cisla
         np.set_printoptions(precision=8,suppress=True)                     
@@ -173,7 +175,7 @@ class Calibration(QtCore.QThread):
                         
         
                 
-    def sequence(self, x, y):
+    def sequence(self, x, y, mode = "avg"):
         '''
         vykresleni kalibracniho bodu a nacteni souradnic prstu v 3D prostoru Leapu
         '''                                                
@@ -186,18 +188,24 @@ class Calibration(QtCore.QThread):
         #ziskani bodu po ustalenem cekani prstu na jednom miste po dobu jedne vteriny
         start = datetime.now()
         points=[]
-        repeat = False
-        while True:
+        lastFrame = 0
+        repeat = False        
+        while True:            
             if repeat:
                 start = datetime.now() #timer
                 points = []
                 repeat = False
             if len(points) == 0:            
-                points.append(self.leap.avg_finger_position(10))
-            point = self.leap.avg_finger_position(10)
+                #points.append(self.leap.avg_finger_position(10))
+                point, frame = self.leap.get_finger_position()
+                if frame != lastFrame: 
+                    points.append(point)
+            #point = self.leap.avg_finger_position(10)
+            point, frame = self.leap.get_finger_position()            
+            
             
             #pokud se prst pohl v jakekoliv ose o znacnou cast, je treba snimat znova
-            shift = 10
+            shift = 3
             for p in points:
                 if abs(p[0]-point[0]) > shift:
                     repeat = True
@@ -208,20 +216,45 @@ class Calibration(QtCore.QThread):
                 elif abs(p[2]-point[2]) > shift:
                     repeat = True                   
                     break 
-            points.append(point)   
+            if frame != lastFrame:    
+                points.append(point)
+                   
             end = datetime.now()
             interval = end-start
             if interval.seconds >=waitTime:
-                if len(points) > 4: #aspon 4 namerene body
+                if len(points) > 9: #aspon 4 namerene body
+                    #print points
                     break
                 else:
                     repeat = True      
             
         #print x, y
-        worldpoint = self.leap.avg_finger_position(10)               
+        #worldpoint = self.leap.avg_finger_position(10)
+        #print worldpoint                                        
         
         self.clean.emit("")  
-        self.draw_update.emit(None)        
+        self.draw_update.emit(None)
+                
+        if mode == "avg":
+            worldpoint = [0, 0, 0]            
+            for point in points:
+                worldpoint = np.add(worldpoint, point)
+            #worldpoint = np.true_divide(worldpoint, len(points))
+            count = len(points)
+            worldpoint = [worldpoint[0]/count, worldpoint[1]/count, worldpoint[2]/count]
+        
+        elif mode == "median":
+            wx = []
+            wy = []
+            wz = []            
+            for point in points:
+                wx.append(point[0])
+                wy.append(point[1])
+                wz.append(point[2])        
+            worldpoint =  [float(np.ma.median(wx)), float(np.ma.median(wy)), float(np.ma.median(wz))]
+            
+                    
+        print worldpoint
         
         return [x,y], worldpoint     
     
@@ -292,7 +325,6 @@ class Calibration(QtCore.QThread):
                 i+=1
                 #self.imagePoints.append(imagePoints)
                 #self.worldPoints.append(worldPoints)                       
-            
             points = []
                 
     def reprojection(self):        
@@ -344,6 +376,8 @@ class Calibration(QtCore.QThread):
         avg = np.sqrt(total/count)
         print "reprojection error:"
         print avg
+        print "ret/reproj error (mm):"
+        print avg/self.pixelToMM           
         
         if self.mode == "reproj":
             output = {}
@@ -384,7 +418,9 @@ class Calibration(QtCore.QThread):
         print self.dist
         print "---"
         print "ret/reproj error:"
-        print self.ret         
+        print self.ret  
+        print "ret/reproj error (mm):"
+        print self.ret/self.pixelToMM                
         
         if self.mode == "new":
             output = {}
@@ -396,7 +432,7 @@ class Calibration(QtCore.QThread):
             output['dist'] = self.dist.tolist()
             output['rvecs'] = self.rvecs[0].tolist()      
             output['tvecs'] = self.tvecs[0].tolist()
-                                                                    
+            
             
             self.file.write(json.dumps(output))        
             self.file.close()
@@ -765,7 +801,7 @@ class MainWindow(QtGui.QWidget):
         self.countEdit = QtGui.QLineEdit()
         self.countEdit.setText("1")
         self.shiftEdit = QtGui.QLineEdit()
-        self.shiftEdit.setText("30")        
+        self.shiftEdit.setText("115")        
         
         
         self.headOptimization = QtGui.QCheckBox("Head mount optimization");

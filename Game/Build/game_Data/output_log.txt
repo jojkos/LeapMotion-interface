@@ -17,13 +17,7 @@ Platform assembly: G:\Dropbox\FIT\3.rocnik\BP\github\LeapMotion-interface\Game\B
 Loading G:\Dropbox\FIT\3.rocnik\BP\github\LeapMotion-interface\Game\Build\game_Data\Managed\LeapCSharp.NET3.5.dll into Unity Child Domain
 Platform assembly: G:\Dropbox\FIT\3.rocnik\BP\github\LeapMotion-interface\Game\Build\game_Data\Managed\OpenCvSharp.dll (this message is harmless)
 Loading G:\Dropbox\FIT\3.rocnik\BP\github\LeapMotion-interface\Game\Build\game_Data\Managed\OpenCvSharp.dll into Unity Child Domain
-- Completed reload, in  0.039 seconds
+- Completed reload, in  0.137 seconds
 desktop: 1920x1200 59Hz; virtual: 1920x1200 at 0,0
 <RI> Initializing input.
 <RI> Input initialized.
-Platform assembly: G:\Dropbox\FIT\3.rocnik\BP\github\LeapMotion-interface\Game\Build\game_Data\Managed\System.Core.dll (this message is harmless)
-Platform assembly: G:\Dropbox\FIT\3.rocnik\BP\github\LeapMotion-interface\Game\Build\game_Data\Managed\System.dll (this message is harmless)
-G:/Dropbox/FIT/3.rocnik/BP/github/LeapMotion-interface/Game/Build/game_Data/inputs.txt
- 
-(Filename: C:/buildslave/unity/build/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 56)
-
